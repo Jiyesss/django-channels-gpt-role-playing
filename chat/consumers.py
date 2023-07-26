@@ -11,6 +11,7 @@ class RolePlayingRoomConsumer(JsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.count = 0
         self.gpt_messages: List[GptMessage] = []
+        self.recommend_message: str = ""
 
     def connect(self):
         room = self.get_room()
@@ -20,6 +21,7 @@ class RolePlayingRoomConsumer(JsonWebsocketConsumer):
             self.accept()
 
             self.gpt_messages = room.get_initial_messages()
+            self.recommend_message = room.get_recommend_message()
             assistant_message = self.get_query()
             self.send_json(
                 {
@@ -35,6 +37,14 @@ class RolePlayingRoomConsumer(JsonWebsocketConsumer):
                 {
                     "type": "assistant-message",
                     "message": assistant_message,
+                }
+            )
+        elif content_dict["type"] == "request-recommend-message":
+            recommended_message = self.get_query(command_query=self.recommend_message)
+            self.send_json(
+                {
+                    "type": "recommended-message",
+                    "message": recommended_message,
                 }
             )
         else:
